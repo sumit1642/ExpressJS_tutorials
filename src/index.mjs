@@ -1,6 +1,9 @@
 import express from "express";
 
 const app = express();
+
+/**A brief intro of middleware,  just the parse the incoming data through the post request into a json response, will talk about it later in upcoming course */
+app.use(express.json());
 const PORT = process.env.PORT || 8000;
 
 const mockUsers = [
@@ -13,22 +16,22 @@ const mockUsers = [
 	{ id: 7, username: "marilyn", displayName: "Marilyn" },
 ];
 
-// This send only hello
+// TODO: This send only hello
 app.get("/", (req, res) => {
 	res.status(200).send({ msg: "Hello" });
 });
 
+// TODO: This only sends the data of the mockUsers on the client side
 app.get("/api/users", (req, res) => {
-	console.log(req.query);
-
 	// destructure the query object from the req object
 	// const { query } = req;
 	// and then desctructre filter and value from the query object itself
 
-	const {
-		query: { filter, value },
-	} = req;
+	const query = req.query;
+	const { filter, value } = query;
+
 	console.log(req.query);
+	console.log(query);
 
 	// Case 1: , return the mockUsers as it is if filter and value query doesn't exists
 	if (!filter && !value) {
@@ -51,7 +54,27 @@ app.get("/api/users", (req, res) => {
 	}
 });
 
-// This retrieves the users data based on id -> /users/:id
+// TODO: Reciving data from the client side
+app.post("/api/users", (req, res) => {
+	console.log(req.body); // Will log `undefined`
+
+	// TODO: For now , we are just sending the data recived directly into that arrary of mockusers
+	//TODO: as every user has id with him/her , we need to do so
+	// TODO: So , what we can do is that we get the last user's id from that array and do +1 and assing the new id to the new user. We can achieve that by finding the length of the whole mockUsers array and .length()-1 and then .id + 1
+
+	const { body } = req;
+
+	const newUser = {
+		id: mockUsers[mockUsers.length - 1].id + 1,
+		...body,
+	};
+	// Adding the newUser to the mockUsers array
+	mockUsers.push(newUser);
+
+	res.send(newUser).sendStatus(201);
+});
+
+// TODO: This retrieves the users data based on id -> /users/:id
 app.get("/users/:id", (req, res) => {
 	console.log(req.params);
 	const parsedId = parseInt(req.params.id);
@@ -72,7 +95,7 @@ app.get("/users/:id", (req, res) => {
 	return res.status(200).send({ msg: "User exists", user: findUser });
 });
 
-// listens the server on 8000
+// TODO: listens the server on 8000
 app.listen(PORT, () => {
 	console.log(`Server started on port ${PORT}`);
 });
