@@ -131,6 +131,33 @@ app.patch("/users/:id", (req, res) => {
 	return res.status(200).send(updatedUser);
 });
 
+// Removing a specific key from an object without deleteing that object -> Method = PATCH
+app.patch("/users/:id/remove-key", (req, res) => {
+	const { id } = req.params;
+	const { key } = req.body;
+	const parsedId = parseInt(id);
+
+	if (isNaN(parsedId)) {
+		return res.status(400).send("Need an ID with a number");
+	}
+
+	const findUserByIndex = mockUsers.findIndex((user) => user.id === parsedId);
+	if (findUserByIndex === -1) {
+		return res.status(404).send("ID not found");
+	}
+
+	const existingUser = mockUsers[findUserByIndex];
+
+	if (key in existingUser) {
+		delete existingUser[key];
+		return res
+			.status(200)
+			.send({ msg: `Key "${key}" removed`, user: existingUser });
+	} else {
+		return res.status(404).send("Key not found");
+	}
+});
+
 // ? This retrieves the users data based on id -> /users/:id
 app.get("/users/:id", (req, res) => {
 	console.log(req.params);
