@@ -158,6 +158,31 @@ app.patch("/users/:id/remove-key", (req, res) => {
 	}
 });
 
+app.delete("/users/:id", (req, res) => {
+	const { id } = req.params;
+	const parsedId = parseInt(id);
+
+	if (isNaN(parsedId)) {
+		return res.status(404).send("ID is not valid");
+	}
+
+	// Find index of user
+	const findUserByIndex = mockUsers.findIndex((user) => user.id === parsedId);
+	if (findUserByIndex === -1) {
+		return res.status(404).send("User doesn't exist");
+	}
+
+	// Use splice to remove the user from array
+	mockUsers.splice(findUserByIndex, 1);
+	
+	// **Reassign IDs sequentially**
+	mockUsers.forEach((user, index) => {
+		user.id = index + 1;
+	});
+
+	return res.status(200).send({ msg: "User deleted successfully" });
+});
+
 // ? This retrieves the users data based on id -> /users/:id
 app.get("/users/:id", (req, res) => {
 	console.log(req.params);
