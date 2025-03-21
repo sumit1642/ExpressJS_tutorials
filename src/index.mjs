@@ -22,7 +22,7 @@ app.get("/", (req, res) => {
 });
 
 // TODO: This only sends the data of the mockUsers on the client side
-app.get("/api/users", (req, res) => {
+app.get("/users", (req, res) => {
 	// destructure the query object from the req object
 	// const { query } = req;
 	// and then desctructre filter and value from the query object itself
@@ -55,7 +55,7 @@ app.get("/api/users", (req, res) => {
 });
 
 // TODO: Reciving data from the client side
-app.post("/api/users", (req, res) => {
+app.post("/users", (req, res) => {
 	console.log(req.body); // Will log `undefined`
 
 	// TODO: For now , we are just sending the data recived directly into that arrary of mockusers
@@ -71,8 +71,37 @@ app.post("/api/users", (req, res) => {
 	// Adding the newUser to the mockUsers array
 	mockUsers.push(newUser);
 
-	res.sendStatus(201).send(newUser)
+	res.sendStatus(201).send(newUser);
 });
+
+app.put("/users/:id", (req, res) => {
+	const { body } = req;
+	const { id } = req.params;
+
+	const parsedId = parseInt(id);
+	if (isNaN(parsedId)) {
+		return res.status(400).send("Something Went Wrong");
+	}
+
+	const findUserByIndex = mockUsers.findIndex((user) => user.id === parsedId);
+	if (findUserByIndex === -1) {
+		return res.status(404).send("User not found");
+	}
+
+	console.log(`Found User at Index: ${findUserByIndex}`);
+
+	// Retrieve the current user object from mockUsers using findUserByIndex.
+	const existingUser = mockUsers[findUserByIndex];
+
+	// Merge the existing user data with the new data (body) using the spread operator (...).
+	const updatedUser = { ...existingUser, ...body };
+
+	// Save the updated user back to the array
+	mockUsers[findUserByIndex] = updatedUser;
+
+	return res.status(200).send(mockUsers[findUserByIndex]);
+});
+
 
 // TODO: This retrieves the users data based on id -> /users/:id
 app.get("/users/:id", (req, res) => {
