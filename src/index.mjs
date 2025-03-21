@@ -2,7 +2,7 @@ import express from "express";
 
 const app = express();
 
-/**A brief intro of middleware,  just the parse the incoming data through the post request into a json response, will talk about it later in upcoming course */
+//  ?  A brief intro of middleware,  just the parse the incoming data through the post request into a json response, will talk about it later in upcoming course
 app.use(express.json());
 const PORT = process.env.PORT || 8000;
 
@@ -16,12 +16,12 @@ const mockUsers = [
 	{ id: 7, username: "marilyn", displayName: "Marilyn" },
 ];
 
-// TODO: This send only hello
+// ? This send only hello and we learnt how to send json data directly
 app.get("/", (req, res) => {
 	res.status(200).send({ msg: "Hello" });
 });
 
-// TODO: This only sends the data of the mockUsers on the client side
+// ? This only sends the data of the mockUsers on the client side and we learnt about query params here
 app.get("/users", (req, res) => {
 	// destructure the query object from the req object
 	// const { query } = req;
@@ -54,7 +54,7 @@ app.get("/users", (req, res) => {
 	}
 });
 
-// TODO: Reciving data from the client side
+// ? Reciving data from the client side
 app.post("/users", (req, res) => {
 	console.log(req.body); // Will log `undefined`
 
@@ -102,8 +102,36 @@ app.put("/users/:id", (req, res) => {
 	return res.status(200).send(mockUsers[findUserByIndex]);
 });
 
+app.patch("/users/:id", (req, res) => {
+	// Extract data from request
+	const { body } = req;
+	const { id } = req.params;
 
-// TODO: This retrieves the users data based on id -> /users/:id
+	// Convert ID to integer
+	const parsedId = parseInt(id);
+	if (isNaN(parsedId)) {
+		return res.status(400).send("Invalid ID format");
+	}
+
+	// Find user index
+	const findUserByIndex = mockUsers.findIndex((user) => user.id === parsedId);
+	if (findUserByIndex === -1) {
+		return res.status(404).send("User not found");
+	}
+
+	// Update user data (Merge old data with new data)
+	const existingUser = mockUsers[findUserByIndex];
+	console.log(`Existing User: `, existingUser);
+	const updatedUser = { ...existingUser, ...body };
+	console.log(`Updated User:`, updatedUser);
+	mockUsers[findUserByIndex] = updatedUser;
+	console.log(`Final Updated User:`, mockUsers[findUserByIndex]);
+
+	// Send updated user as response
+	return res.status(200).send(updatedUser);
+});
+
+// ? This retrieves the users data based on id -> /users/:id
 app.get("/users/:id", (req, res) => {
 	console.log(req.params);
 	const parsedId = parseInt(req.params.id);
@@ -124,7 +152,7 @@ app.get("/users/:id", (req, res) => {
 	return res.status(200).send({ msg: "User exists", user: findUser });
 });
 
-// TODO: listens the server on 8000
+// ? listens the server on 8000
 app.listen(PORT, () => {
 	console.log(`Server started on port ${PORT}`);
 });
