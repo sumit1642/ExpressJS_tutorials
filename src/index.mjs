@@ -71,7 +71,7 @@ app.post("/api/users", (req, res) => {
 	// Adding the newUser to the mockUsers array
 	mockUsers.push(newUser);
 
-	res.send(newUser).sendStatus(201);
+	res.sendStatus(201).send(newUser)
 });
 
 // TODO: This retrieves the users data based on id -> /users/:id
