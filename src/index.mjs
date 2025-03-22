@@ -5,6 +5,20 @@ const app = express();
 //  ?  A brief intro of middleware,  just the parse the incoming data through the post request into a json response, will talk about it later in upcoming course
 app.use(express.json());
 const PORT = process.env.PORT || 8000;
+// -------------------------------------------------------------------------------------
+// Now talking about middlewares
+/**
+ * Middleware can be applied in two ways: globally or to specific routes.
+ * We use next() inside a middleware function to pass control to the next middleware or route handler.
+ */
+
+const loggingMiddleWare = (req, res, next) => {
+	console.log(`${req.method} : ${req.url}`);
+	next();
+};
+
+// This is how we use a middleware globally which goes through each routes and will log the data
+app.use(loggingMiddleWare);
 
 const mockUsers = [
 	{ id: 1, username: "anson", displayName: "Anson" },
@@ -174,7 +188,7 @@ app.delete("/users/:id", (req, res) => {
 
 	// Use splice to remove the user from array
 	mockUsers.splice(findUserByIndex, 1);
-	
+
 	// **Reassign IDs sequentially**
 	mockUsers.forEach((user, index) => {
 		user.id = index + 1;
