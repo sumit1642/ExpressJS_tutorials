@@ -2,24 +2,44 @@ import express from "express";
 
 const app = express();
 
-//  ?  A brief intro of middleware,  just the parse the incoming data through the post request into a json response, will talk about it later in upcoming course
+// ? Middleware: Parses incoming JSON data in request body
+// This allows us to access request body data as JSON objects in routes.
 app.use(express.json());
 const PORT = process.env.PORT || 8000;
+
 // -------------------------------------------------------------------------------------
-// Now talking about middlewares
+// ? Middleware Explanation
 /**
- * Middleware can be applied in two ways: globally or to specific routes.
- * We use next() inside a middleware function to pass control to the next middleware or route handler.
+ * Middleware functions execute in the request-response cycle and can be applied in two ways:
+ * - Globally (app.use(middleware)) - Runs for every request after it is declared.
+ * - Route-specific (app.use('/route', middleware)) - Runs only for specific routes.
+ *
+ * Middleware can be used for:
+ * - Authentication
+ * - Logging requests
+ * - Validating request data
+ * - Modifying request/response objects
+ *
+ * The next() function must be called to pass control to the next middleware or route handler.
  */
 
-const loggingMiddleWare = (req, res, next) => {
-	console.log(`${req.method} : ${req.url}`);
+const resolveIndexByUserId = (req, res, next) => {
+	const { id } = req.params;
+	const parsedId = parseInt(id);
+
+	if (isNaN(parsedId)) {
+		return res.sendStatus(400); // Invalid ID format
+	}
+	const findUserByIndex = mockUsers.findIndex((user) => user.id === parsedId);
+	if (findUserByIndex === -1) {
+		return res.sendStatus(400); // User not found
+	}
+
+	req.userIndex = findUserByIndex; // Store index for later use
 	next();
 };
 
-// This is how we use a middleware globally which goes through each routes and will log the data
-app.use(loggingMiddleWare);
-
+// Mock user database
 const mockUsers = [
 	{ id: 1, username: "anson", displayName: "Anson" },
 	{ id: 2, username: "jack", displayName: "Jack" },
@@ -30,166 +50,89 @@ const mockUsers = [
 	{ id: 7, username: "marilyn", displayName: "Marilyn" },
 ];
 
-// ? This send only hello and we learnt how to send json data directly
+// ? Base route returning a basic JSON response
 app.get("/", (req, res) => {
 	res.status(200).send({ msg: "Hello" });
 });
 
-// ? This only sends the data of the mockUsers on the client side and we learnt about query params here
+// ? Get all users or filter by query parameters
+/**
+ * Query Parameters:
+ * - filter: The key in the user object to search by (e.g., "username").
+ * - value: The value to match against the filter key.
+ */
 app.get("/users", (req, res) => {
-	// destructure the query object from the req object
-	// const { query } = req;
-	// and then desctructre filter and value from the query object itself
+	const { filter, value } = req.query;
 
-	const query = req.query;
-	const { filter, value } = query;
-
-	console.log(req.query);
-	console.log(query);
-
-	// Case 1: , return the mockUsers as it is if filter and value query doesn't exists
-	if (!filter && !value) {
-		return res.send(mockUsers);
+	if (!filter || !value) {
+		return res.send(mockUsers); // Return all users if no filter is applied.
 	}
 
-	/**
-	 * Case 2: Only if both 'filter' and 'value' are provided, the filter operation will be performed.
-	 * - The 'filter' is expected to be a key in each user object (e.g., 'name', 'age', 'gender').
-	 * - The 'value' is the string or number to be matched against the values of the specified 'filter' key.
-	 * - This code filters the 'mockUsers' array to return users whose 'filter' key contains the 'value' as a substring.
-	 *   For example, if 'filter' is 'name' and 'value' is 'Sumit', it will return all users with 'name' containing 'Sumit'.
-	 * - The 'includes()' method checks for the presence of the 'value' in the specified field of each user.
-	 */
-	if (filter && value) {
-		return res.send(
-			// If filter = "name", then user[filter] is the same as user.name.
-			mockUsers.filter((user) => user[filter].includes(value)),
-		);
-	}
+	const filteredUsers = mockUsers.filter((user) =>
+		user[filter]?.toString().includes(value),
+	);
+	return res.send(filteredUsers);
 });
 
-// ? Reciving data from the client side
+// ? Add a new user
+/**
+ * The request body should include user details like:
+ * {
+ *   "username": "newUser",
+ *   "displayName": "New User"
+ * }
+ */
 app.post("/users", (req, res) => {
-	console.log(req.body); // Will log `undefined`
-
-	// TODO: For now , we are just sending the data recived directly into that arrary of mockusers
-	//TODO: as every user has id with him/her , we need to do so
-	// TODO: So , what we can do is that we get the last user's id from that array and do +1 and assing the new id to the new user. We can achieve that by finding the length of the whole mockUsers array and .length()-1 and then .id + 1
-
 	const { body } = req;
 
 	const newUser = {
-		id: mockUsers[mockUsers.length - 1].id + 1,
+		id: mockUsers.length + 1, // Assign the next sequential ID
 		...body,
 	};
-	// Adding the newUser to the mockUsers array
+
 	mockUsers.push(newUser);
-
-	res.sendStatus(201).send(newUser);
+	res.status(201).send(newUser);
 });
 
-app.put("/users/:id", (req, res) => {
+// ? Update a user (PUT - full replacement)
+app.put("/users/:id", resolveIndexByUserId, (req, res) => {
 	const { body } = req;
-	const { id } = req.params;
+	const userIndex = req.userIndex;
 
-	const parsedId = parseInt(id);
-	if (isNaN(parsedId)) {
-		return res.status(400).send("Something Went Wrong");
-	}
-
-	const findUserByIndex = mockUsers.findIndex((user) => user.id === parsedId);
-	if (findUserByIndex === -1) {
-		return res.status(404).send("User not found");
-	}
-
-	console.log(`Found User at Index: ${findUserByIndex}`);
-
-	// Retrieve the current user object from mockUsers using findUserByIndex.
-	const existingUser = mockUsers[findUserByIndex];
-
-	// Merge the existing user data with the new data (body) using the spread operator (...).
-	const updatedUser = { ...existingUser, ...body };
-
-	// Save the updated user back to the array
-	mockUsers[findUserByIndex] = updatedUser;
-
-	return res.status(200).send(mockUsers[findUserByIndex]);
+	// Replace the entire user object with the new data
+	mockUsers[userIndex] = { id: mockUsers[userIndex].id, ...body };
+	return res.status(200).send(mockUsers[userIndex]);
 });
 
-app.patch("/users/:id", (req, res) => {
-	// Extract data from request
+// ? Update specific fields of a user (PATCH - partial update)
+app.patch("/users/:id", resolveIndexByUserId, (req, res) => {
 	const { body } = req;
-	const { id } = req.params;
+	const userIndex = req.userIndex;
 
-	// Convert ID to integer
-	const parsedId = parseInt(id);
-	if (isNaN(parsedId)) {
-		return res.status(400).send("Invalid ID format");
-	}
-
-	// Find user index
-	const findUserByIndex = mockUsers.findIndex((user) => user.id === parsedId);
-	if (findUserByIndex === -1) {
-		return res.status(404).send("User not found");
-	}
-
-	// Update user data (Merge old data with new data)
-	const existingUser = mockUsers[findUserByIndex];
-	console.log(`Existing User: `, existingUser);
-	const updatedUser = { ...existingUser, ...body };
-	console.log(`Updated User:`, updatedUser);
-	mockUsers[findUserByIndex] = updatedUser;
-	console.log(`Final Updated User:`, mockUsers[findUserByIndex]);
-
-	// Send updated user as response
-	return res.status(200).send(updatedUser);
+	// Merge existing user data with new fields
+	mockUsers[userIndex] = { ...mockUsers[userIndex], ...body };
+	return res.status(200).send(mockUsers[userIndex]);
 });
 
-// Removing a specific key from an object without deleteing that object -> Method = PATCH
-app.patch("/users/:id/remove-key", (req, res) => {
-	const { id } = req.params;
+// ? Remove a specific key from a user
+app.patch("/users/:id/remove-key", resolveIndexByUserId, (req, res) => {
 	const { key } = req.body;
-	const parsedId = parseInt(id);
+	const userIndex = req.userIndex;
+	const user = mockUsers[userIndex];
 
-	if (isNaN(parsedId)) {
-		return res.status(400).send("Need an ID with a number");
+	if (key in user) {
+		delete user[key];
+		return res.status(200).send({ msg: `Key "${key}" removed`, user });
 	}
-
-	const findUserByIndex = mockUsers.findIndex((user) => user.id === parsedId);
-	if (findUserByIndex === -1) {
-		return res.status(404).send("ID not found");
-	}
-
-	const existingUser = mockUsers[findUserByIndex];
-
-	if (key in existingUser) {
-		delete existingUser[key];
-		return res
-			.status(200)
-			.send({ msg: `Key "${key}" removed`, user: existingUser });
-	} else {
-		return res.status(404).send("Key not found");
-	}
+	return res.status(404).send("Key not found");
 });
 
-app.delete("/users/:id", (req, res) => {
-	const { id } = req.params;
-	const parsedId = parseInt(id);
+// ? Delete a user and reassign IDs
+app.delete("/users/:id", resolveIndexByUserId, (req, res) => {
+	const userIndex = req.userIndex;
+	mockUsers.splice(userIndex, 1);
 
-	if (isNaN(parsedId)) {
-		return res.status(404).send("ID is not valid");
-	}
-
-	// Find index of user
-	const findUserByIndex = mockUsers.findIndex((user) => user.id === parsedId);
-	if (findUserByIndex === -1) {
-		return res.status(404).send("User doesn't exist");
-	}
-
-	// Use splice to remove the user from array
-	mockUsers.splice(findUserByIndex, 1);
-
-	// **Reassign IDs sequentially**
+	// Reassign IDs sequentially
 	mockUsers.forEach((user, index) => {
 		user.id = index + 1;
 	});
@@ -197,28 +140,13 @@ app.delete("/users/:id", (req, res) => {
 	return res.status(200).send({ msg: "User deleted successfully" });
 });
 
-// ? This retrieves the users data based on id -> /users/:id
-app.get("/users/:id", (req, res) => {
-	console.log(req.params);
-	const parsedId = parseInt(req.params.id);
-	console.log(parsedId);
-	console.log(typeof parsedId);
-
-	if (isNaN(parsedId)) {
-		return res.status(400).send({ msg: "Invalid Request" });
-	}
-
-	const findUser = mockUsers.find((user) => user.id === parsedId);
-	console.log(`findUser: ${findUser}`);
-
-	if (!findUser) {
-		return res.status(404).send({ msg: "User not found" });
-	}
-
-	return res.status(200).send({ msg: "User exists", user: findUser });
+// ? Get user by ID
+app.get("/users/:id", resolveIndexByUserId, (req, res) => {
+	const user = mockUsers[req.userIndex];
+	return res.status(200).send({ msg: "User found", user });
 });
 
-// ? listens the server on 8000
+// ? Start server
 app.listen(PORT, () => {
 	console.log(`Server started on port ${PORT}`);
 });
