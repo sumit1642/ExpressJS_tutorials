@@ -1,45 +1,10 @@
 import express from "express";
 
 const app = express();
-
-// ? Middleware: Parses incoming JSON data in request body
-// This allows us to access request body data as JSON objects in routes.
 app.use(express.json());
 const PORT = process.env.PORT || 8000;
 
-// -------------------------------------------------------------------------------------
-// ? Middleware Explanation
-/**
- * Middleware functions execute in the request-response cycle and can be applied in two ways:
- * - Globally (app.use(middleware)) - Runs for every request after it is declared.
- * - Route-specific (app.use('/route', middleware)) - Runs only for specific routes.
- *
- * Middleware can be used for:
- * - Authentication
- * - Logging requests
- * - Validating request data
- * - Modifying request/response objects
- *
- * The next() function must be called to pass control to the next middleware or route handler.
- */
 
-const resolveIndexByUserId = (req, res, next) => {
-	const { id } = req.params;
-	const parsedId = parseInt(id);
-
-	if (isNaN(parsedId)) {
-		return res.sendStatus(400); // Invalid ID format
-	}
-	const findUserByIndex = mockUsers.findIndex((user) => user.id === parsedId);
-	if (findUserByIndex === -1) {
-		return res.sendStatus(400); // User not found
-	}
-
-	req.userIndex = findUserByIndex; // Store index for later use
-	next();
-};
-
-// Mock user database
 const mockUsers = [
 	{ id: 1, username: "anson", displayName: "Anson" },
 	{ id: 2, username: "jack", displayName: "Jack" },
@@ -50,22 +15,34 @@ const mockUsers = [
 	{ id: 7, username: "marilyn", displayName: "Marilyn" },
 ];
 
-// ? Base route returning a basic JSON response
+// Middleware to resolve user index by ID
+const resolveIndexByUserId = (req, res, next) => {
+	const { id } = req.params;
+	const parsedId = parseInt(id);
+	if (isNaN(parsedId)) {
+		return res
+			.status(400)
+			.json({ error: "Invalid ID format. ID must be a number." });
+	}
+	const findUserByIndex = mockUsers.findIndex((user) => user.id === parsedId);
+	if (findUserByIndex === -1) {
+		return res.sendStatus(400);
+	}
+	req.userIndex = findUserByIndex;
+	next();
+};
+
+// Base route
 app.get("/", (req, res) => {
 	res.status(200).send({ msg: "Hello" });
 });
 
-// ? Get all users or filter by query parameters
-/**
- * Query Parameters:
- * - filter: The key in the user object to search by (e.g., "username").
- * - value: The value to match against the filter key.
- */
+// Get all users or filter users by query parameters
 app.get("/users", (req, res) => {
 	const { filter, value } = req.query;
 
 	if (!filter || !value) {
-		return res.send(mockUsers); // Return all users if no filter is applied.
+		return res.send(mockUsers);
 	}
 
 	const filteredUsers = mockUsers.filter((user) =>
@@ -74,19 +51,12 @@ app.get("/users", (req, res) => {
 	return res.send(filteredUsers);
 });
 
-// ? Add a new user
-/**
- * The request body should include user details like:
- * {
- *   "username": "newUser",
- *   "displayName": "New User"
- * }
- */
+// Add a new user
 app.post("/users", (req, res) => {
 	const { body } = req;
 
 	const newUser = {
-		id: mockUsers.length + 1, // Assign the next sequential ID
+		id: mockUsers.length + 1,
 		...body,
 	};
 
@@ -94,27 +64,25 @@ app.post("/users", (req, res) => {
 	res.status(201).send(newUser);
 });
 
-// ? Update a user (PUT - full replacement)
+// Update a user completely (PUT)
 app.put("/users/:id", resolveIndexByUserId, (req, res) => {
 	const { body } = req;
 	const userIndex = req.userIndex;
 
-	// Replace the entire user object with the new data
 	mockUsers[userIndex] = { id: mockUsers[userIndex].id, ...body };
 	return res.status(200).send(mockUsers[userIndex]);
 });
 
-// ? Update specific fields of a user (PATCH - partial update)
+// Update specific fields of a user (PATCH)
 app.patch("/users/:id", resolveIndexByUserId, (req, res) => {
 	const { body } = req;
 	const userIndex = req.userIndex;
 
-	// Merge existing user data with new fields
 	mockUsers[userIndex] = { ...mockUsers[userIndex], ...body };
 	return res.status(200).send(mockUsers[userIndex]);
 });
 
-// ? Remove a specific key from a user
+// Remove a specific key from a user object
 app.patch("/users/:id/remove-key", resolveIndexByUserId, (req, res) => {
 	const { key } = req.body;
 	const userIndex = req.userIndex;
@@ -127,12 +95,11 @@ app.patch("/users/:id/remove-key", resolveIndexByUserId, (req, res) => {
 	return res.status(404).send("Key not found");
 });
 
-// ? Delete a user and reassign IDs
+// Delete a user and reassign IDs sequentially
 app.delete("/users/:id", resolveIndexByUserId, (req, res) => {
 	const userIndex = req.userIndex;
 	mockUsers.splice(userIndex, 1);
 
-	// Reassign IDs sequentially
 	mockUsers.forEach((user, index) => {
 		user.id = index + 1;
 	});
@@ -140,13 +107,13 @@ app.delete("/users/:id", resolveIndexByUserId, (req, res) => {
 	return res.status(200).send({ msg: "User deleted successfully" });
 });
 
-// ? Get user by ID
+// Get user by ID
 app.get("/users/:id", resolveIndexByUserId, (req, res) => {
 	const user = mockUsers[req.userIndex];
 	return res.status(200).send({ msg: "User found", user });
 });
 
-// ? Start server
+// Start server
 app.listen(PORT, () => {
 	console.log(`Server started on port ${PORT}`);
 });
