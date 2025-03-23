@@ -1,9 +1,9 @@
 import express from "express";
+import { query } from "express-validator";
 
 const app = express();
 app.use(express.json());
 const PORT = process.env.PORT || 8000;
-
 
 const mockUsers = [
 	{ id: 1, username: "anson", displayName: "Anson" },
@@ -37,18 +37,18 @@ app.get("/", (req, res) => {
 	res.status(200).send({ msg: "Hello" });
 });
 
-// Get all users or filter users by query parameters
-app.get("/users", (req, res) => {
+app.get("/users", query(["filter", "value"]).isString(), (req, res) => {
 	const { filter, value } = req.query;
 
-	if (!filter || !value) {
-		return res.send(mockUsers);
-	}
+	// If no filter or value, return all users
+	if (!filter || !value) return res.json(mockUsers);
 
-	const filteredUsers = mockUsers.filter((user) =>
-		user[filter]?.toString().includes(value),
+	// Filter users safely
+	const filteredUsers = mockUsers.filter(
+		(user) => user[filter] && user[filter].toString().includes(value),
 	);
-	return res.send(filteredUsers);
+
+	res.json(filteredUsers);
 });
 
 // Add a new user
