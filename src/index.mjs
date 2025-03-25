@@ -1,10 +1,10 @@
 import express from "express";
-import { query } from "express-validator";
 
 const app = express();
 app.use(express.json());
 const PORT = process.env.PORT || 8000;
 
+// 📌 Mock user data
 const mockUsers = [
 	{ id: 1, username: "anson", displayName: "Anson" },
 	{ id: 2, username: "jack", displayName: "Jack" },
@@ -15,7 +15,7 @@ const mockUsers = [
 	{ id: 7, username: "marilyn", displayName: "Marilyn" },
 ];
 
-// Middleware to resolve user index by ID
+// 🔄 Middleware: Resolve user index by ID
 const resolveIndexByUserId = (req, res, next) => {
 	const { id } = req.params;
 	const parsedId = parseInt(id);
@@ -32,18 +32,26 @@ const resolveIndexByUserId = (req, res, next) => {
 	next();
 };
 
-// Base route
+// 🌍 Base route
 app.get("/", (req, res) => {
 	res.status(200).send({ msg: "Hello" });
 });
 
-app.get("/users", query(["filter", "value"]).isString(), (req, res) => {
+// 🔍 Get users with optional filtering
+app.get("/users", (req, res) => {
 	const { filter, value } = req.query;
 
-	// If no filter or value, return all users
+	// ⚠️ Validate query parameters
+	if (filter && typeof filter !== "string") {
+		return res.status(400).json({ error: "Filter must be a string" });
+	}
+	if (value && typeof value !== "string") {
+		return res.status(400).json({ error: "Value must be a string" });
+	}
+
+	// 🗂 Return filtered users or all users if no filter
 	if (!filter || !value) return res.json(mockUsers);
 
-	// Filter users safely
 	const filteredUsers = mockUsers.filter(
 		(user) => user[filter] && user[filter].toString().includes(value),
 	);
@@ -51,7 +59,7 @@ app.get("/users", query(["filter", "value"]).isString(), (req, res) => {
 	res.json(filteredUsers);
 });
 
-// Add a new user
+// ➕ Add a new user
 app.post("/users", (req, res) => {
 	const { body } = req;
 
@@ -64,7 +72,7 @@ app.post("/users", (req, res) => {
 	res.status(201).send(newUser);
 });
 
-// Update a user completely (PUT)
+// 🔄 Update a user completely (PUT)
 app.put("/users/:id", resolveIndexByUserId, (req, res) => {
 	const { body } = req;
 	const userIndex = req.userIndex;
@@ -73,7 +81,7 @@ app.put("/users/:id", resolveIndexByUserId, (req, res) => {
 	return res.status(200).send(mockUsers[userIndex]);
 });
 
-// Update specific fields of a user (PATCH)
+// ✏️ Update specific fields of a user (PATCH)
 app.patch("/users/:id", resolveIndexByUserId, (req, res) => {
 	const { body } = req;
 	const userIndex = req.userIndex;
@@ -82,7 +90,7 @@ app.patch("/users/:id", resolveIndexByUserId, (req, res) => {
 	return res.status(200).send(mockUsers[userIndex]);
 });
 
-// Remove a specific key from a user object
+// ❌ Remove a specific key from a user object
 app.patch("/users/:id/remove-key", resolveIndexByUserId, (req, res) => {
 	const { key } = req.body;
 	const userIndex = req.userIndex;
@@ -95,7 +103,7 @@ app.patch("/users/:id/remove-key", resolveIndexByUserId, (req, res) => {
 	return res.status(404).send("Key not found");
 });
 
-// Delete a user and reassign IDs sequentially
+// 🗑 Delete a user and reassign IDs sequentially
 app.delete("/users/:id", resolveIndexByUserId, (req, res) => {
 	const userIndex = req.userIndex;
 	mockUsers.splice(userIndex, 1);
@@ -107,13 +115,13 @@ app.delete("/users/:id", resolveIndexByUserId, (req, res) => {
 	return res.status(200).send({ msg: "User deleted successfully" });
 });
 
-// Get user by ID
+// 🔍 Get user by ID
 app.get("/users/:id", resolveIndexByUserId, (req, res) => {
 	const user = mockUsers[req.userIndex];
 	return res.status(200).send({ msg: "User found", user });
 });
 
-// Start server
+// 🚀 Start server
 app.listen(PORT, () => {
 	console.log(`Server started on port ${PORT}`);
 });
