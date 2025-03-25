@@ -1,4 +1,5 @@
 import express from "express";
+import { query, validationResult } from "express-validator";
 
 const app = express();
 app.use(express.json());
@@ -52,36 +53,33 @@ app.get("/", (req, res) => {
 	res.status(200).send({ msg: "Hello" });
 });
 
-/* 
-🔍 GET USERS (with optional filtering) 
-------------------------------------------------------
-✅ Purpose: Fetch all users OR filter users by a query
-✅ Method: GET 
-✅ Query Params:
-   - filter (string) ➝ The field to filter by (e.g., "username")
-   - value (string)  ➝ The value to match in the field
-✅ Process:
-   1️⃣ If no filter or value is provided, return all users.
-   2️⃣ If both are provided, filter the users accordingly.
-*/
-app.get("/users", (req, res) => {
-	const { filter, value } = req.query;
+// Using query & validation from express-validator
+app.get(
+	"/api/users",
+	[
+		query("filter")
+			.isString()
+			.notEmpty()
+			.withMessage("filter cannot be empty"),
+		query("value")
+			.isString()
+			.notEmpty()
+			.withMessage("value must not be empty"),
+	],
+	(req, res) => {
+		// Remember always handle the errors just after getting into the route.
+		const errors = validationResult(req);
+		if (!errors.isEmpty()) {
+			return res.status(400).json({ error: errors.array() });
+		}
 
-	if (filter && typeof filter !== "string") {
-		return res.status(400).json({ error: "Filter must be a string" });
-	}
-	if (value && typeof value !== "string") {
-		return res.status(400).json({ error: "Value must be a string" });
-	}
+		const filteredUsers = mockUsers.filter(
+			(user) => user[filter] && user[filter].toString().includes(value),
+		);
 
-	if (!filter || !value) return res.json(mockUsers);
-
-	const filteredUsers = mockUsers.filter(
-		(user) => user[filter] && user[filter].toString().includes(value),
-	);
-
-	res.json(filteredUsers);
-});
+		res.json(filteredUsers);
+	},
+);
 
 /* 
 ➕ ADD A NEW USER 
@@ -94,7 +92,7 @@ app.get("/users", (req, res) => {
    3️⃣ Saves the user in the mock database.
    4️⃣ Returns the newly added user.
 */
-app.post("/users", (req, res) => {
+app.post("/api/users", (req, res) => {
 	const { body } = req;
 	const newUser = { id: mockUsers.length + 1, ...body };
 	mockUsers.push(newUser);
@@ -111,7 +109,7 @@ app.post("/users", (req, res) => {
    2️⃣ Replaces user data while keeping the same ID.
    3️⃣ Returns the updated user.
 */
-app.put("/users/:id", resolveIndexByUserId, (req, res) => {
+app.put("/api/users/:id", resolveIndexByUserId, (req, res) => {
 	const { body } = req;
 	const userIndex = req.userIndex;
 	mockUsers[userIndex] = { id: mockUsers[userIndex].id, ...body };
@@ -128,7 +126,7 @@ app.put("/users/:id", resolveIndexByUserId, (req, res) => {
    2️⃣ Updates only the provided fields.
    3️⃣ Returns the updated user.
 */
-app.patch("/users/:id", resolveIndexByUserId, (req, res) => {
+app.patch("/api/users/:id", resolveIndexByUserId, (req, res) => {
 	const { body } = req;
 	const userIndex = req.userIndex;
 	mockUsers[userIndex] = { ...mockUsers[userIndex], ...body };
@@ -146,7 +144,7 @@ app.patch("/users/:id", resolveIndexByUserId, (req, res) => {
    3️⃣ If found, deletes the key and returns updated user.
    4️⃣ If not found, returns an error.
 */
-app.patch("/users/:id/remove-key", resolveIndexByUserId, (req, res) => {
+app.patch("/api/users/:id/remove-key", resolveIndexByUserId, (req, res) => {
 	const { key } = req.body;
 	const userIndex = req.userIndex;
 	const user = mockUsers[userIndex];
@@ -169,7 +167,7 @@ app.patch("/users/:id/remove-key", resolveIndexByUserId, (req, res) => {
    3️⃣ Reassigns all user IDs sequentially.
    4️⃣ Returns success message.
 */
-app.delete("/users/:id", resolveIndexByUserId, (req, res) => {
+app.delete("/api/users/:id", resolveIndexByUserId, (req, res) => {
 	const userIndex = req.userIndex;
 	mockUsers.splice(userIndex, 1);
 
@@ -189,7 +187,7 @@ app.delete("/users/:id", resolveIndexByUserId, (req, res) => {
    1️⃣ Finds user by ID via middleware.
    2️⃣ Returns the user details.
 */
-app.get("/users/:id", resolveIndexByUserId, (req, res) => {
+app.get("/api/users/:id", resolveIndexByUserId, (req, res) => {
 	const user = mockUsers[req.userIndex];
 	return res.status(200).send({ msg: "User found", user });
 });
