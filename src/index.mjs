@@ -60,23 +60,34 @@ app.get(
 		query("filter")
 			.isString()
 			.notEmpty()
+			.escape() // used to avoid reciving any codes through the url and prevents XSS attacks
 			.withMessage("filter cannot be empty"),
 		query("value")
 			.isString()
 			.notEmpty()
+			.escape() // used to avoid reciving any codes through the url and prevents XSS attacks
 			.withMessage("value must not be empty"),
 	],
 	(req, res) => {
-		// Remember always handle the errors just after getting into the route.
+		// Handle validation errors first
 		const errors = validationResult(req);
 		if (!errors.isEmpty()) {
 			return res.status(400).json({ error: errors.array() });
 		}
 
-		const filteredUsers = mockUsers.filter(
-			(user) => user[filter] && user[filter].toString().includes(value),
-		);
+		// Extract query parameters
+		const { filter, value } = req.query;
 
+		// Filter users safely
+		const filteredUsers = mockUsers.filter((user) => {
+			// Ensure user[filter] exists before checking .includes()
+			if (user[filter] !== undefined && user[filter] !== null) {
+				return user[filter].toString().includes(value);
+			}
+			return false;
+		});
+
+		// Return filtered users
 		res.json(filteredUsers);
 	},
 );
