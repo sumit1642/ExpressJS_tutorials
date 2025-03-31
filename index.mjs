@@ -18,7 +18,7 @@ app.get("/", (req, res) => {
 	res.json({ mockUsers });
 });
 
-app.get("/users/:id", (req, res) => {
+app.get("/users/get/:id", (req, res) => {
 	const parsedId = parseInt(req.params.id);
 	if (isNaN(parsedId) || parsedId <= 0) {
 		return res.status(400).json({ msg: "Provide a valid id" });
