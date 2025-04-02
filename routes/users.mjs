@@ -1,20 +1,17 @@
-// routes/users.mjs
 import { Router } from "express";
 import { ValidateSearchQuery } from "../validators/QueryValidator.mjs";
 import { mockUsers } from "../common/constants.mjs";
+import { validateRequestId } from "../middleWares/validateRequestId.mjs";
+
 export const router = Router();
 
 router.get("/", (req, res) => {
 	res.json({ mockUsers });
 });
 
-router.get("/users/get/:id", (req, res) => {
-	const parsedId = parseInt(req.params.id);
-	if (isNaN(parsedId) || parsedId <= 0) {
-		return res.status(400).json({ msg: "Provide a valid id" });
-	}
+router.get("/users/get/:id", validateRequestId, (req, res) => {
 
-	const findUser = mockUsers.find((user) => user.id === parsedId);
+	const findUser = mockUsers.find((user) => user.id === req.parsedId);
 	if (!findUser) {
 		return res.status(404).json({ msg: "User doesn't exist" });
 	}
@@ -34,12 +31,10 @@ router.post("/users/new", (req, res) => {
 	res.json(newUser);
 });
 
-router.patch("/users/update/:id", (req, res) => {
-	const parsedId = parseInt(req.params.id);
-	if (isNaN(parsedId) || parsedId <= 0) {
-		return res.status(400).json({ msg: "Provide a valid id" });
-	}
-	const findUserIndex = mockUsers.findIndex((user) => user.id === parsedId);
+router.patch("/users/update/:id", validateRequestId, (req, res) => {
+	const findUserIndex = mockUsers.findIndex(
+		(user) => user.id === req.parsedId,
+	);
 	if (findUserIndex === -1) {
 		return res.status(404).json({ msg: "User not found" });
 	}
@@ -52,13 +47,10 @@ router.patch("/users/update/:id", (req, res) => {
 	res.json({ user: mockUsers[findUserIndex] });
 });
 
-router.put("/users/replace/:id", (req, res) => {
-	const parsedId = parseInt(req.params.id);
-	if (isNaN(parsedId) || parsedId <= 0) {
-		return res.status(400).json({ msg: "Provide a valid id" });
-	}
-
-	const findUserIndex = mockUsers.findIndex((user) => user.id === parsedId);
+router.put("/users/replace/:id", validateRequestId, (req, res) => {
+	const findUserIndex = mockUsers.findIndex(
+		(user) => user.id === req.parsedId,
+	);
 	if (findUserIndex === -1) {
 		return res.status(404).json({ msg: "User not found" });
 	}
@@ -68,7 +60,7 @@ router.put("/users/replace/:id", (req, res) => {
 		return res.status(400).json({ msg: "All fields are required" });
 	}
 
-	mockUsers[findUserIndex] = { id: parsedId, username, displayName };
+	mockUsers[findUserIndex] = { id: req.parsedId, username, displayName };
 	res.json({ user: mockUsers[findUserIndex] });
 });
 
