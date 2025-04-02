@@ -1,5 +1,6 @@
 // routes/users.mjs
 import { Router } from "express";
+import { ValidateSearchQuery } from "../validators/QueryValidator.mjs";
 
 export const router = Router();
 
