@@ -1,5 +1,4 @@
 import express from "express";
-import { ValidateSearchQuery } from "./validators/QueryValidator.mjs";
 import { router } from "./routes/users.mjs";
 
 const app = express();
