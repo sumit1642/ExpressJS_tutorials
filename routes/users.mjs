@@ -1,7 +1,7 @@
 // routes/users.mjs
 import { Router } from "express";
 import { ValidateSearchQuery } from "../validators/QueryValidator.mjs";
-
+import { mockUsers } from "../common/constants.mjs";
 export const router = Router();
 
 router.get("/", (req, res) => {
