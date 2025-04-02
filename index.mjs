@@ -3,6 +3,7 @@ import { ValidateSearchQuery } from "./validators/QueryValidator.mjs";
 
 const app = express();
 app.use(express.json());
+const PORT = process.env.PORT || 8000;
 
 const mockUsers = [
 	{ id: 1, username: "anson", displayName: "Anson" },
@@ -92,4 +93,4 @@ app.get("/users/search", ValidateSearchQuery, (req, res) => {
 	res.json({ users: filteredUsers });
 });
 
-app.listen(8000, () => console.log("Server running on port 8000"));
+app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
