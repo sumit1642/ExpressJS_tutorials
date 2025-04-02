@@ -3,13 +3,13 @@ import { ValidateSearchQuery } from "../validators/QueryValidator.mjs";
 import { mockUsers } from "../common/constants.mjs";
 import { validateRequestId } from "../middleWares/validateRequestId.mjs";
 
-export const router = Router();
+export const usersRouter = Router();
 
-router.get("/", (req, res) => {
+usersRouter.get("/", (req, res) => {
 	res.json({ mockUsers });
 });
 
-router.get("/users/get/:id", validateRequestId, (req, res) => {
+usersRouter.get("/users/get/:id", validateRequestId, (req, res) => {
 
 	const findUser = mockUsers.find((user) => user.id === req.parsedId);
 	if (!findUser) {
@@ -18,7 +18,7 @@ router.get("/users/get/:id", validateRequestId, (req, res) => {
 	res.json(findUser);
 });
 
-router.post("/users/new", (req, res) => {
+usersRouter.post("/users/new", (req, res) => {
 	const { username, displayName } = req.body;
 
 	const newUser = {
@@ -31,7 +31,7 @@ router.post("/users/new", (req, res) => {
 	res.json(newUser);
 });
 
-router.patch("/users/update/:id", validateRequestId, (req, res) => {
+usersRouter.patch("/users/update/:id", validateRequestId, (req, res) => {
 	const findUserIndex = mockUsers.findIndex(
 		(user) => user.id === req.parsedId,
 	);
@@ -47,7 +47,7 @@ router.patch("/users/update/:id", validateRequestId, (req, res) => {
 	res.json({ user: mockUsers[findUserIndex] });
 });
 
-router.put("/users/replace/:id", validateRequestId, (req, res) => {
+usersRouter.put("/users/replace/:id", validateRequestId, (req, res) => {
 	const findUserIndex = mockUsers.findIndex(
 		(user) => user.id === req.parsedId,
 	);
@@ -64,7 +64,7 @@ router.put("/users/replace/:id", validateRequestId, (req, res) => {
 	res.json({ user: mockUsers[findUserIndex] });
 });
 
-router.get("/users/search", ValidateSearchQuery, (req, res) => {
+usersRouter.get("/users/search", ValidateSearchQuery, (req, res) => {
 	const { filterBy, value } = req.query;
 	const filteredUsers = mockUsers.filter((user) =>
 		user[filterBy].toString().toLowerCase().includes(value.toLowerCase()),
