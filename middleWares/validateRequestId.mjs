@@ -1,4 +1,4 @@
-export const requestPreProcessor = (req, res, next) => {
+export const validateRequestId = (req, res, next) => {
 	if (req.params.id) {
 		const parsedId = parseInt(req.params.id);
 		if (isNaN(parsedId) || parsedId <= 0) {
