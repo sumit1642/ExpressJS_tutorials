@@ -43,19 +43,22 @@ app.post("/users/new", (req, res) => {
 
 	mockUsers.push(newUser);
 	res.json(newUser);
-})
+});
 
 app.patch("/users/update/:id", (req, res) => {
 	const parsedId = parseInt(req.params.id);
 	if (isNaN(parsedId) || parsedId <= 0) {
 		return res.status(400).json({ msg: "Provide a valid id" });
-	}	const findUserIndex = mockUsers.findIndex((user) => user.id === parsedId);if (findUserIndex === -1) {
+	}
+	const findUserIndex = mockUsers.findIndex((user) => user.id === parsedId);
+	if (findUserIndex === -1) {
 		return res.status(404).json({ msg: "User not found" });
-	}const { username, displayName } = req.body;
+	}
+	const { username, displayName } = req.body;
 	mockUsers[findUserIndex] = {
 		...mockUsers[findUserIndex],
 		username: username || mockUsers[findUserIndex].username,
-		displayName: displayName || mockUsers[findUserIndex].displayName
+		displayName: displayName || mockUsers[findUserIndex].displayName,
 	};
 	res.json({ user: mockUsers[findUserIndex] });
 });
