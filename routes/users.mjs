@@ -5,12 +5,23 @@ import { validateRequestId } from "../middleWares/validateRequestId.mjs";
 
 export const usersRouter = Router();
 
-usersRouter.get("/", (req, res) => {
-	console.log(`Before sending the cookie`, req.headers.cookie);
-	res.cookie("Hello", "World");
-	console.log(`After sending the cookie`, req.headers.cookie);
+/**
+ * NOTE: req.headers.cookie : It logs the cookie in un-parsed or raw format
+ * req.cookies : It show the parsed cookies into json using cookie-parser, that we have included into server's main index.js file
+ */
 
-	res.json({ mockUsers });
+usersRouter.get("/", (req, res) => {
+	console.log("Incoming Cookie:", req.headers.cookie); // from client
+	res.cookie("Hello", "World"); // setting cookie in response
+
+	console.log("Parsed Cookies via cookie-parser:", req.cookies); // parsed from request
+
+	// If we want to show the client a condtion based response
+	if (!req.cookies.Hello || req.cookies.Hello !== "World") {
+		return res.status(404).json({ msg: "Provide valid cookie" });
+	}
+
+	return res.json({ mockUsers });
 });
 
 usersRouter.get("/users/get/:id", validateRequestId, (req, res) => {
@@ -22,7 +33,7 @@ usersRouter.get("/users/get/:id", validateRequestId, (req, res) => {
 });
 
 usersRouter.post("/users/new", (req, res) => {
-const { username, displayName } = req.body;
+	const { username, displayName } = req.body;
 
 	const newUser = {
 		id: mockUsers[mockUsers.length - 1].id + 1,
