@@ -1,13 +1,10 @@
 import express from "express";
-import { usersRouter } from "./routes/users.mjs"
-
+import { mainRoutes } from "./routes/index.mjs";
 
 const app = express();
-app.use(express.json());
 const PORT = process.env.PORT || 8000;
 
-app.use(usersRouter)
-
-
+app.use(express.json());
+app.use(mainRoutes);
 
 app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
