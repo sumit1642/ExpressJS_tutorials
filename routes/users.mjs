@@ -6,11 +6,14 @@ import { validateRequestId } from "../middleWares/validateRequestId.mjs";
 export const usersRouter = Router();
 
 usersRouter.get("/", (req, res) => {
+	console.log(`Before sending the cookie`, req.headers.cookie);
+	res.cookie("Hello", "World");
+	console.log(`After sending the cookie`, req.headers.cookie);
+
 	res.json({ mockUsers });
 });
 
 usersRouter.get("/users/get/:id", validateRequestId, (req, res) => {
-
 	const findUser = mockUsers.find((user) => user.id === req.parsedId);
 	if (!findUser) {
 		return res.status(404).json({ msg: "User doesn't exist" });
@@ -19,7 +22,7 @@ usersRouter.get("/users/get/:id", validateRequestId, (req, res) => {
 });
 
 usersRouter.post("/users/new", (req, res) => {
-	const { username, displayName } = req.body;
+const { username, displayName } = req.body;
 
 	const newUser = {
 		id: mockUsers[mockUsers.length - 1].id + 1,
