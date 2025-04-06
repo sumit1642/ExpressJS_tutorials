@@ -12,9 +12,10 @@ export const usersRouter = Router();
 
 usersRouter.get("/", (req, res) => {
 	console.log("Incoming Cookie:", req.headers.cookie); // from client
-	res.cookie("Hello", "World"); // setting cookie in response
+	res.cookie("Hello", "World", { signed: true }); // setting cookie in response
 
 	console.log("Parsed Cookies via cookie-parser:", req.cookies); // parsed from request
+	console.log(`Signed Cookies `, req.signedCookies);
 
 	// If we want to show the client a condtion based response
 	if (!req.cookies.Hello || req.cookies.Hello !== "World") {
