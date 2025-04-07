@@ -18,7 +18,7 @@ usersRouter.get("/", (req, res) => {
 	console.log(`Signed Cookies `, req.signedCookies);
 
 	// If we want to show the client a condtion based response
-	if (!req.cookies.Hello || req.cookies.Hello !== "World") {
+	if (!req.signedCookies.Hello || req.signedCookies.Hello !== "World") {
 		return res.status(404).json({ msg: "Provide valid cookie" });
 	}
 
