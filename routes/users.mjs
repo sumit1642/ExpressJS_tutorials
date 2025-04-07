@@ -12,17 +12,14 @@ export const usersRouter = Router();
 
 usersRouter.get("/", (req, res) => {
 	console.log("Incoming Cookie:", req.headers.cookie); // from client
+});
+
+usersRouter.get("/users", (req, res) => {
 	res.cookie("Hello", "World", { signed: true }); // setting cookie in response
-
-	console.log("Parsed Cookies via cookie-parser:", req.cookies); // parsed from request
-	console.log(`Signed Cookies `, req.signedCookies);
-
-	// If we want to show the client a condtion based response
 	if (!req.signedCookies.Hello || req.signedCookies.Hello !== "World") {
 		return res.status(404).json({ msg: "Provide valid cookie" });
 	}
-
-	return res.json({ mockUsers });
+	res.json({ mockUsers });
 });
 
 usersRouter.get("/users/get/:id", validateRequestId, (req, res) => {
