@@ -11,9 +11,6 @@ export const usersRouter = Router();
  */
 
 usersRouter.get("/", (req, res) => {
-	console.log(`Session ID:==> `, req.sessionID);
-	console.log(`Session Object :  \n `, req.session);
-
 	// this will stop re-generation of session id on subsequent requests, it should never be set false
 	req.session.visited = true;
 
