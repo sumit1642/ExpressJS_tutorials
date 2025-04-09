@@ -11,14 +11,21 @@ export const usersRouter = Router();
  */
 
 usersRouter.get("/", (req, res) => {
-	console.log("Incoming Cookie:", req.headers.cookie); // from client
+	console.log(`Session ID:==> `, req.sessionID);
+	console.log(`Session Object :  \n `, req.session);
+
+	// this will stop re-generation of session id on subsequent requests, it should never be set false
+	req.session.visited = true;
+
+	res.send("This is Home Page");
 });
 
 usersRouter.get("/users", (req, res) => {
 	res.cookie("Hello", "World", { signed: true }); // setting cookie in response
-	if (!req.signedCookies.Hello || req.signedCookies.Hello !== "World") {
-		return res.status(404).json({ msg: "Provide valid cookie" });
-	}
+	req.session.visited = true;
+	console.log(`Session ID:==> `, req.sessionID);
+	console.log(`Session Object :  \n `, req.session);
+	
 	res.json({ mockUsers });
 });
 
